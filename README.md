@@ -1,0 +1,1 @@
+After using AWS CloudFormation to codify a few architecture projects, I wanted to apply the knowledge and skills learned and apply them to HashiCorp's Terraform. This repository will contain various Terraform files I will create to learn more about the service.
