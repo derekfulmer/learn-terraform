@@ -12,8 +12,9 @@ variable "dev_vpc_subnets" {
 }
 
 variable "my_ip" {
-  description = "From where you may SSH"
+  description = "My IP"
 }
+
 # Create a VPC
 resource "aws_vpc" "dev-vpc" {
   cidr_block = var.dev_vpc_cidr_block
@@ -23,7 +24,7 @@ resource "aws_vpc" "dev-vpc" {
   }
 }
 
-# Create a public subnet in one AZ
+# Create a subnet in one AZ
 resource "aws_subnet" "dev-subnet" {
   vpc_id            = aws_vpc.dev-vpc.id
   cidr_block        = var.dev_vpc_subnets[0]
@@ -60,13 +61,35 @@ resource "aws_internet_gateway" "dev-vpc-igw" {
 
 # Create an SSH keypair to use with the instance
 
-# Launch an EC2 instance, with Security Group rules for HTTP/S and SSH
-resource "aws_instance" "foo" {
-  ami           = "ami-0ff8a91507f77f867"
-  instance_type = "t2.micro"
-  key_name      = "value"
-  depends_on    = [aws_internet_gateway.dev-vpc-igw]
+data "aws_ami" "latest-amazon-linux-image"{
+  most_recent = true
+  owners = ["amazon"]
+  filter {
+    name = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
 }
+
+# Launch an EC2 instance, with Security Group rules for HTTP/S and SSH
+resource "aws_instance" "web-server-1" {
+  ami           = data.aws_ami.latest-amazon-linux-image.id
+  instance_type = "t2.micro"
+
+  subnet_id = aws_subnet.dev-subnet.id
+  vpc_security_group_ids = [aws_security_group.dev-sg.id] 
+  availability_zone = "us-east-1a"
+  key_name      = "learn-tf"
+
+  associate_public_ip_address = true
+
+  depends_on    = [aws_internet_gateway.dev-vpc-igw]
+
+  tags = {
+    Name = "web-server-1"
+  }
+}
+
+# Create an output of the public IP address of the EC2 instance 
 
 resource "aws_security_group" "dev-sg" {
   name   = "dev-sg"
