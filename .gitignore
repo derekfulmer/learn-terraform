@@ -7,3 +7,6 @@
 
 # Terraform variables files which may include sensitve data
 *.tfvars
+
+# Shell scripts, merely for testing purpose. I would track them in a production setting.
+*.sh
