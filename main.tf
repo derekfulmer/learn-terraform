@@ -1,20 +1,3 @@
-provider "aws" {
-  region = "us-east-1"
-}
-
-variable "dev_vpc_cidr_block" {
-  description = "Subnet CIDR block for the dev VPC"
-}
-
-variable "dev_vpc_subnets" {
-  description = "A list of subnet strings to define VPC subnets"
-  type        = list(string)
-}
-
-variable "my_ip" {
-  description = "My IP"
-}
-
 # Create a VPC
 resource "aws_vpc" "dev-vpc" {
   cidr_block = var.dev_vpc_cidr_block
@@ -29,6 +12,10 @@ resource "aws_subnet" "dev-subnet" {
   vpc_id            = aws_vpc.dev-vpc.id
   cidr_block        = var.dev_vpc_subnets[0]
   availability_zone = "us-east-1a"
+
+  tags = {
+    Name = "dev-subnet-1"
+  }
 }
 
 resource "aws_route_table" "dev-rtb-1" {
@@ -59,13 +46,12 @@ resource "aws_internet_gateway" "dev-vpc-igw" {
 
 }
 
-# Create an SSH keypair to use with the instance
 
-data "aws_ami" "latest-amazon-linux-image"{
+data "aws_ami" "latest-amazon-linux-image" {
   most_recent = true
-  owners = ["amazon"]
+  owners      = ["amazon"]
   filter {
-    name = "name"
+    name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
 }
@@ -75,21 +61,19 @@ resource "aws_instance" "web-server-1" {
   ami           = data.aws_ami.latest-amazon-linux-image.id
   instance_type = "t2.micro"
 
-  subnet_id = aws_subnet.dev-subnet.id
-  vpc_security_group_ids = [aws_security_group.dev-sg.id] 
-  availability_zone = "us-east-1a"
-  key_name      = "learn-tf"
+  subnet_id              = aws_subnet.dev-subnet.id
+  vpc_security_group_ids = [aws_security_group.dev-sg.id]
+  availability_zone      = "us-east-1a"
+  key_name               = "learn-tf"
 
   associate_public_ip_address = true
 
-  depends_on    = [aws_internet_gateway.dev-vpc-igw]
+  depends_on = [aws_internet_gateway.dev-vpc-igw]
 
   tags = {
     Name = "web-server-1"
   }
 }
-
-# Create an output of the public IP address of the EC2 instance 
 
 resource "aws_security_group" "dev-sg" {
   name   = "dev-sg"
@@ -120,7 +104,4 @@ resource "aws_security_group" "dev-sg" {
     Name = "dev-sg"
   }
 }
-
-# Deploy nginx Docker container
-
 
